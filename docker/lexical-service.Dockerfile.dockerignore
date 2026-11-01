@@ -6,6 +6,7 @@
 .claude/.local
 .pi/outputs
 /infra/local/generated
+/deploy/selfhost/state
 
 # Legacy layout directories may still contain ignored local build artifacts.
 /agents

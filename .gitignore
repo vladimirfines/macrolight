@@ -63,3 +63,6 @@ gha-creds-*.json
 # Python bytecode from tooling/pii and other scripts.
 **/__pycache__/
 **/*.pyc
+
+# Private self-host migration manifests, credentials, certificates and backups.
+/deploy/selfhost/state/

@@ -99,6 +99,11 @@ Vite's defaults.
 
 ## Run the local stack
 
+For a persistent identity provider shared with other apps, use the
+[shared-auth migration and Open WebUI guide](../../deploy/selfhost/README.md).
+The developer launcher below still owns a combined, disposable stack; do not
+use its reset/restore/start paths to manage an instance after that migration.
+
 The local stack runs without Doppler. It runs Postgres, Redis, LocalStack, OpenSearch, Kafka, and FusionAuth in Docker, with dummy AWS credentials and fixed test secrets.
 
 On Linux, the Nix dev shell supplies the Docker CLI, daemon, Compose, and `fuse-overlayfs`. Nix is the only host dependency.

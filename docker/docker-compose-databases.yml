@@ -33,6 +33,11 @@ services:
       - databases
   redis:
     image: 'redis/redis-stack:latest'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
     ports:
       - '6379:6379' # Expose Redis on the default port
       - '8001:8001' # Expose Redis Stack Server UI/tools
