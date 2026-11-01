@@ -5,6 +5,8 @@ It prepares files first; `migrate` performs the explicit container move. No step
 rebuilds Rust, resets a database, restores a snapshot or deletes volumes.
 It is separate from the upstream disposable developer-stack launcher.
 
+For executable-only exports and cache cleanup boundaries, see [disk space](DISK_SPACE.md).
+
 ## What stays running
 
 The new `macrolight-auth` project owns FusionAuth, its current PostgreSQL data,

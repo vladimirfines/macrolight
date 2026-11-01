@@ -2,8 +2,8 @@
 
 ## Scope
 
-Owns the persistent auth-stack migration and Open WebUI OIDC setup. These tools
-operate existing local Compose projects; they do not deploy upstream cloud stacks.
+Owns the persistent auth-stack migration, Open WebUI OIDC setup and runtime export.
+These tools operate existing local Compose projects; they do not deploy upstream cloud stacks.
 
 ## Start here
 
@@ -11,6 +11,7 @@ operate existing local Compose projects; they do not deploy upstream cloud stack
 - `stacks.py`: partition a resolved Compose model; preserve external resources.
 - `openwebui.py`: provision one dedicated OIDC application and private overlay.
 - `operations.py`: bounded execution, generated env selection and config preflight.
+- `runtime.py` and `DISK_SPACE.md`: executable export and post-adoption verification.
 - `DEPLOYMENT.md`: repair, resume, worker isolation and verification boundaries.
 
 ## Checks
@@ -30,3 +31,5 @@ operate existing local Compose projects; they do not deploy upstream cloud stack
 - Keep the mailbox off every Macro gateway network and private state out of image contexts.
 - Validate effective JSON configuration before mutation; never print resolved secrets.
 - Preserve the LocalStack restart guard; a running container is not recovered storage.
+- Export never adopts or deletes build data; verify live mounts and application behavior before cleanup.
+- Never use the combined-stack launcher to adopt binaries after shared-auth migration.

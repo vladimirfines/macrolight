@@ -11,14 +11,18 @@ WORKDIR /app
 # Resolve workspace links and native workerd/esbuild packages inside Linux.
 # Host node_modules never enter this context or shadow the installed tree.
 COPY package.json bun.lock bunfig.toml ./
-COPY apps/web apps/web
-COPY apps/marketing apps/marketing
+COPY apps/web/package.json apps/web/package.json
+COPY apps/web/patches apps/web/patches
+COPY apps/marketing/package.json apps/marketing/package.json
 COPY packages packages
 COPY services/ai-editing-worker services/ai-editing-worker
-COPY services/lexical-service services/lexical-service
-COPY services/bots services/bots
+COPY services/lexical-service/package.json services/lexical-service/package.json
+COPY services/bots/anthropic-status-bot/package.json services/bots/anthropic-status-bot/package.json
+COPY services/bots/goalert-bot/package.json services/bots/goalert-bot/package.json
+COPY services/bots/stripe-payment-bot/package.json services/bots/stripe-payment-bot/package.json
 COPY vendor/ironcalc/pkg vendor/ironcalc/pkg
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --filter ai-editing-worker \
+    && rm -rf /root/.bun/install/cache
 
 WORKDIR /app/services/ai-editing-worker
 RUN bun scripts/generate-sandbox.ts

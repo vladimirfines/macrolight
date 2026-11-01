@@ -53,6 +53,9 @@ comment/markdown rendering. Production runs on ECS behind the gateway at
   (`INTERNAL_AUTH_KEY`); it also calls `sync-service` with
   `SYNC_SERVICE_AUTH_KEY`. On ECS these come from its Doppler project and
   Secrets Manager; locally from `docker/docker-compose.yml`.
+- The Dockerfile installs the filtered workspace graph with pinned Bun 1.3.5;
+  the final stage contains only the bundle and the complete external `loro-crdt`
+  package (its WASM must remain beside the JS). Rebuild after source changes.
 - Run the bundle, not `src/server.ts` directly: unbundled, Bun hits a TDZ in
   the circular `@lexical/*` imports (see the Dockerfile).
 - Deploys to dev on every push to `main` and to prod on release. Never deploy

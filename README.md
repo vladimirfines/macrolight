@@ -12,7 +12,7 @@ and setup tools, not a claim that an existing installation has been upgraded.
 | Area | Implemented change |
 | --- | --- |
 | Build memory | Host service builds default to at most two concurrent jobs; the legacy container build defaults to two. Explicit job overrides remain available. |
-| Build disk use | Development incremental artifacts are disabled by default; shared dependency caches remain reusable. |
+| Build disk use | Development incremental artifacts are disabled by default; executable-only exports let initialized stacks detach from compiler caches before cleanup. |
 | MCP sign-in | Uses FusionAuth's hosted login without requiring a Google/Gmail provider lookup or Google secrets. |
 | Optional connectors | Pipedream can be absent across agent egress, chat and the app catalog; partial credentials fail clearly. |
 | Local defaults | Fake Pipedream credentials and webhook stubs are no longer generated. |
@@ -21,7 +21,7 @@ and setup tools, not a claim that an existing installation has been upgraded.
 | Operations | Existing auth volumes are reused; migration exports a database backup and attempts rollback on startup failure. Macro stop does not stop the separated auth project. |
 | Deployment checks | Explicit generated-env injection, authoritative JSON preflight, bounded commands, ownership checks, atomic state, diagnostics and targeted repair. |
 | Resume | Infrastructure health waits precede application startup; normal starts preserve existing containers after the auth URL transition. |
-| Linux worker | Dependencies install inside the image; trace-only mounts prevent host native packages from replacing Linux executables. Runtime validation is still pending. |
+| JS images | Filtered Linux workspace installs, a bundle-only Lexical runtime with external Loro WASM, and trace-only worker mounts. ARM64 image validation is still pending. |
 
 The auth split preserves the existing tenant, users, Macro client, signing keys
 and issuer. Synchronous legacy tenant webhooks still affect user creation/email
@@ -32,6 +32,7 @@ The split does not change those account-provisioning policies.
 
 - [Separate auth and connect Open WebUI](deploy/selfhost/README.md).
 - [SSO support in other self-hosted apps](deploy/selfhost/APP_SUPPORT.md).
+- [Reduce local disk use](deploy/selfhost/DISK_SPACE.md).
 - [Deployment hardening and remaining verification](deploy/selfhost/DEPLOYMENT.md).
 - [Build and local development](docs/development/running-locally.md).
 - [Code contribution rules](CONTRIBUTING.md).

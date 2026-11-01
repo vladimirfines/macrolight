@@ -68,7 +68,8 @@ require manual inspection of both projects; never reset data to recover it.
 ## Linux worker dependencies
 
 The AI editing image installs the pinned Bun workspace dependencies inside Linux,
-including development dependencies used by Wrangler. Its context excludes host
+filtered to the worker and its workspace dependency graph, including development
+dependencies used by Wrangler. Download caches are removed in the install layer. Its context excludes host
 `node_modules`, native build outputs, env files and the default private deployment
 state directory. The container mounts only its trace state, not the repository,
 so a later host install cannot shadow Linux workerd/esbuild packages.
@@ -78,8 +79,14 @@ snapshots preserve old mounts and image definitions: this source change does not
 retrofit an old snapshot. Review and regenerate the resolved Compose model for
 the existing project before applying the new image and trace-only mount. Preserve
 the current `.wrangler` directory and application volumes. Never rerun first-time
-initialization to update a worker. The image currently installs the full JS
-workspace for correct workspace links; it has not been minimized or benchmarked.
+initialization to update a worker. Frontend sources and unrelated service sources
+are excluded; workspace manifests and patches retain the frozen lockfile graph.
+
+The Lexical Dockerfile now uses a separate builder stage. Only the server bundle
+and the external `loro-crdt` package (with its WASM) enter the final image. Neither
+image accepts a package token build argument. See [disk space](DISK_SPACE.md) for
+executable export, cache cleanup boundaries and verification before removing old
+artifacts. No image-size savings or ARM64 runtime result is established here.
 
 ## Exposure and trust
 
@@ -102,7 +109,7 @@ in every client. Never disable certificate verification to fix HSTS errors.
 | --- | --- |
 | Configuration, targeted repair and resume ordering | Regression tests exercise authoritative JSON, env-file selection, secret omission, failure ordering and selected recreation. These are harness protections. |
 | Shared auth and Open WebUI | Configuration/provisioning tools and offline checks; live migration, token validation and browser SSO still require the deployment host. |
-| Linux worker image | Source isolation is implemented; an actual ARM64 build, health transition and document edit remain unverified. |
+| JS images | Filtered installs and a bundle-only Lexical runtime are implemented. Bun 1.3.5 filtered installs, Lexical bundle health/auth/conversion and worker bundle dry-run were exercised on Linux x86-64; actual ARM64 image builds and a document edit remain unverified. |
 | Optional providers and MCP | Boot decoupling is implemented on the preceding commits; authenticated MCP initialize/tools/list and user isolation need live verification. |
 | Storage | Emulator restart guard only. Complete S3/DynamoDB checkpoint/restore, uploaded-byte hashes, metadata and permission round-trips remain pending. |
 | Engine compatibility | Existing-engine operation only. VM ownership/adoption, guest storage/network diagnostics, tiny build/load probes and guarded reset remain pending. |

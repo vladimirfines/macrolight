@@ -513,6 +513,9 @@ For Pipedream Connect on a machine hostname, include that HTTPS origin in
 `PIPEDREAM_ALLOWED_ORIGINS` through `--env-file`; the headless default names only
 localhost. Reuse that override file on subsequent stack invocations.
 
+For a completed self-host build, see [disk-space reduction](../../deploy/selfhost/DISK_SPACE.md)
+for executable-only export and verification before compiler-cache cleanup.
+
 ### Init Snapshots
 
 `just run_local` and `stack up` both cache the expensive infrastructure initialization. The first cold run:
