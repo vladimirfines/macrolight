@@ -5,6 +5,19 @@ I believe this is needed because FusionAuth doesn't support DCR
 (Official Docs)[https://modelcontextprotocol.io/docs/tutorials/security/authorization]
 (Useful fusionauth article)[https://fusionauth.io/articles/ai/mcp-connecting-software-ai]
 
+## Sign-in provider
+
+The broker opens FusionAuth's hosted login page without an `idp_hint`.
+FusionAuth controls the available login methods; no `google_gmail` identity
+provider or Google OAuth secret is needed to initialize MCP. Other configured
+identity providers can still be offered by FusionAuth. The browser must be able
+to reach the configured public FusionAuth origin and the broker callback must
+remain registered on the FusionAuth application.
+
+Token exchange, refresh, revocation, redirect validation, PKCE, and bearer
+validation retain their existing checks. Use separate FusionAuth application
+registrations to add SSO to other applications.
+
 ## Origin versus redirect URI
 
 Two different values get checked during sign-in, by two different parties:

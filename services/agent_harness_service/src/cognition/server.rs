@@ -589,9 +589,18 @@ pub async fn build(
     // webhooks need both URI and secret; a half-set pair is ignored so we
     // never mint a callback we cannot serve.
     let pipedream_client: ai_tools::ToolPipedreamConnection = match (
-        config.pipedream_client_id.value(),
-        config.pipedream_client_secret.value(),
-        config.pipedream_project_id.value(),
+        config
+            .pipedream_client_id
+            .value()
+            .filter(|v| !v.trim().is_empty()),
+        config
+            .pipedream_client_secret
+            .value()
+            .filter(|v| !v.trim().is_empty()),
+        config
+            .pipedream_project_id
+            .value()
+            .filter(|v| !v.trim().is_empty()),
     ) {
         (Some(client_id), Some(client_secret), Some(project_id)) => {
             let webhook_uri = match (
@@ -653,10 +662,13 @@ pub async fn build(
                 None => client,
             }))
         }
-        _ => {
+        (None, None, None) => {
             tracing::info!("Pipedream credentials not set; Pipedream MCP connectors disabled");
             None
         }
+        _ => anyhow::bail!(
+            "set all of PIPEDREAM_CLIENT_ID, PIPEDREAM_CLIENT_SECRET and PIPEDREAM_PROJECT_ID, or leave all unset"
+        ),
     };
     let pipedream_repo =
         pipedream_mcp::outbound::pg_connection_repo::PgConnectionRepo::new(db.clone());

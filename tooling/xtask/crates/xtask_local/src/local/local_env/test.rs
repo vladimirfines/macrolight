@@ -100,9 +100,6 @@ fn emits_required_keys() {
         "REDIS_HOST",
         "MACRO_DB_URL",
         "INTERNAL_API_KEY",
-        "PIPEDREAM_CLIENT_ID",
-        "PIPEDREAM_CLIENT_SECRET",
-        "PIPEDREAM_PROJECT_ID",
         "AUTHENTICATION_SERVICE_SECRET_KEY",
         "OPENSEARCH_USERNAME",
         "OPENSEARCH_PASSWORD",
@@ -161,6 +158,23 @@ fn emits_required_keys() {
         assert!(
             env.contains_key(key),
             "missing required local env key: {key}"
+        );
+    }
+}
+
+#[test]
+fn local_defaults_leave_pipedream_disabled() {
+    let env = local_env();
+    for key in [
+        "PIPEDREAM_CLIENT_ID",
+        "PIPEDREAM_CLIENT_SECRET",
+        "PIPEDREAM_PROJECT_ID",
+        "PIPEDREAM_WEBHOOK_URI",
+        "PIPEDREAM_WEBHOOK_SECRET",
+    ] {
+        assert!(
+            !env.contains_key(key),
+            "unexpected Pipedream default: {key}"
         );
     }
 }

@@ -76,6 +76,10 @@ edit capability but calls no nested model and emits no additional model charge; 
 
 - Executable toolsets exclude legacy chats in every host and code mode. Keep historical parsing compatibility only in `frontend_compat.rs`; never merge it into provider schemas.
 
+Treat absent or blank Pipedream credentials as disabled in `mcp_app_catalog`;
+reject partial sets, matching the harness and cognition configuration. Saved
+connector records must not enable an unconfigured upstream.
+
 ## Checks
 
 - `cargo test -p ai_tools` (`SQLX_OFFLINE` unset).

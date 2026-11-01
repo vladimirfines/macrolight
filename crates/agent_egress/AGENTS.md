@@ -62,6 +62,10 @@ their signed `agent_id` claim, so Macro's tools write as that agent. The bot
 never comes from the request. `MacroApiTokenSigner::mint_for_agent` callers
 (code mode) choose the claim themselves; `mint_for` signs none.
 
+Pass no upstream to `PipedreamMcpCredentials` when the integration is disabled.
+It then refuses Pipedream destinations before reading saved connections;
+Macro's own MCP and custom-server resolvers stay layered independently.
+
 ## Gotchas
 
 - Never let the sandbox see an upstream credential directly; every egress

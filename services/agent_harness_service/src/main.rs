@@ -474,18 +474,43 @@ async fn run() -> anyhow::Result<()> {
 
     // The client that addresses Pipedream's remote MCP server, built from the
     // same credentials `agent_harness_service::cognition` uses.
-    let pipedream = PipedreamClient::new(PipedreamConfig {
-        client_id: config.pipedream_client_id.to_string(),
-        client_secret: config.pipedream_client_secret.to_string(),
-        project_id: config.pipedream_project_id.to_string(),
-        environment: config.pipedream_environment.clone(),
-        api_url: config.pipedream_api_url.clone(),
-        mcp_url: config.pipedream_mcp_url.clone(),
-        // Only Connect tokens carry allowed origins, and this service never
-        // mints one: connecting apps stays in the app.
-        allowed_origins: Vec::new(),
-    })
-    .context("failed to build Pipedream client")?;
+    let pipedream = match (
+        config
+            .pipedream_client_id
+            .value()
+            .filter(|v| !v.trim().is_empty()),
+        config
+            .pipedream_client_secret
+            .value()
+            .filter(|v| !v.trim().is_empty()),
+        config
+            .pipedream_project_id
+            .value()
+            .filter(|v| !v.trim().is_empty()),
+    ) {
+        (Some(client_id), Some(client_secret), Some(project_id)) => {
+            Some(
+                PipedreamClient::new(PipedreamConfig {
+                    client_id: client_id.to_owned(),
+                    client_secret: client_secret.to_owned(),
+                    project_id: project_id.to_owned(),
+                    environment: config.pipedream_environment.clone(),
+                    api_url: config.pipedream_api_url.clone(),
+                    mcp_url: config.pipedream_mcp_url.clone(),
+                    // This service never mints Connect tokens.
+                    allowed_origins: Vec::new(),
+                })
+                .context("failed to build Pipedream client")?,
+            )
+        }
+        (None, None, None) => {
+            tracing::info!("Pipedream credentials not set; sandbox connectors disabled");
+            None
+        }
+        _ => anyhow::bail!(
+            "set all of PIPEDREAM_CLIENT_ID, PIPEDREAM_CLIENT_SECRET and PIPEDREAM_PROJECT_ID, or leave all unset"
+        ),
+    };
 
     // Every session's MCP servers: Macro's own under the reserved `macro`
     // slug, the owner's custom servers by URL key, then the owner's Pipedream

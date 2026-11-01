@@ -172,13 +172,6 @@ async fn build_auth_proxy(
     .await
     .context("failed to load FusionAuth client secret")?;
 
-    let google_client_secret = LocalOrRemoteSecret::new_from_secret_manager(
-        config.google_client_secret_key.as_ref().to_owned(),
-        secretsmanager_client,
-    )
-    .await
-    .context("failed to load Google client secret")?;
-
     let fusionauth_public_url = config
         .fusionauth_public_url
         .value()
@@ -190,14 +183,14 @@ async fn build_auth_proxy(
         fusionauth_client_secret.as_ref().to_owned(),
         config.fusionauth_base_url.as_ref().to_owned(),
         mcp_oauth_redirect_uri,
-        config.google_client_id.as_ref().to_owned(),
-        google_client_secret.as_ref().to_owned(),
+        // This client only uses FusionAuth's OAuth endpoints. Google grants
+        // belong to the authentication service, not the MCP broker.
+        String::new(),
+        String::new(),
     )
     .with_public_url(fusionauth_public_url);
 
-    let auth_provider = FusionAuthOAuthProvider::new(fusionauth_client)
-        .await
-        .context("failed to initialize MCP auth provider")?;
+    let auth_provider = FusionAuthOAuthProvider::new(fusionauth_client);
     let redis_client = redis::Client::open(config.redis_uri.as_ref().to_owned())
         .context("failed to initialize redis client for MCP auth proxy")?;
     let legacy_clients = Arc::new(RedisClientRegistry::new(redis_client.clone()));

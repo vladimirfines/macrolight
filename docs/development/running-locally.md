@@ -125,7 +125,7 @@ Local authentication includes a working signing key pair for Macro API tokens,
 which settings actions such as enabling CRM require. New teams start with CRM
 disabled; enable it in Settings > CRM before creating pipelines.
 
-The stack supplies stubbed values for required configuration, including third-party integrations (Google, GitHub, Stripe, CloudFront). Those flows do not work against real services with the stubs. Local auth, documents, and search work independently. The agent harness currently also requires a configured Google Gmail identity provider for its public MCP routes; without real Google OAuth configuration, it exits during startup.
+The stack supplies stubbed values for required configuration, including third-party integrations (Google, GitHub, Stripe, CloudFront). Those flows do not work against real services with the stubs. Local auth, documents, and search work independently. Public MCP sign-in uses FusionAuth's configured login page; it does not require Google credentials or a Google Gmail identity provider.
 
 To use a real integration locally, supply its keys via `--env-file` — see [Integration Secrets](#integration-secrets) below.
 
@@ -226,12 +226,12 @@ persona accounts it created. It is safe to run against a stack that you tested i
 
 ## Integration Secrets
 
-A `--no-doppler` stack supplies deterministic stubs for required configuration. External integrations still need real values, and the agent harness additionally needs the Google Gmail identity provider created from real Google OAuth configuration:
+A `--no-doppler` stack supplies deterministic stubs for required configuration. External integrations still need real values. Public MCP authentication requires working FusionAuth configuration and a browser-reachable `FUSIONAUTH_PUBLIC_URL`, but no Google identity provider:
 
 | Integration | Keys | Stub behavior |
 | --- | --- | --- |
-| Google login / Gmail | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET_KEY` | Google SSO and Gmail inbox linking are unavailable. Local signup still works. The email service skips inbox syncing without a Gmail grant. The agent harness cannot start its public MCP routes without the Google Gmail identity provider. |
-| Pipedream | `PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET`, `PIPEDREAM_PROJECT_ID` | Placeholders satisfy the harness configuration loader; Pipedream integrations require real credentials. |
+| Google login / Gmail | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET_KEY` | Google SSO and Gmail inbox linking are unavailable. Local signup still works. The email service skips inbox syncing without a Gmail grant. Public MCP starts without Google configuration and signs in through FusionAuth. |
+| Pipedream | `PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET`, `PIPEDREAM_PROJECT_ID` | Leave all three unset to disable Pipedream in chat and sandbox egress. Set all three to enable it; partial credentials fail startup. Empty or whitespace-only values count as unset. |
 | GitHub login | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_IDP_ID` | Login with GitHub is unavailable |
 | Stripe billing | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` | Checkout and subscription endpoints fail. Signup skips Stripe and leaves profile billing unset, so free-team creation works. Only the required legacy account field stores a local placeholder. |
 | CloudFront signed URLs | `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_DISTRIBUTION_URL`, `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PUBLIC_KEY_ID`, `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PRIVATE_KEY` | Document download URLs are unsigned (fine against local S3) |
@@ -244,6 +244,13 @@ to `run_local`:
 ```bash
 just run_local --no-doppler --env-file ./local.env
 ```
+
+New local environments do not generate Pipedream credentials or webhook stubs.
+Existing env files may still contain old placeholders: remove their
+`PIPEDREAM_CLIENT_ID`, `PIPEDREAM_CLIENT_SECRET`, `PIPEDREAM_PROJECT_ID`,
+`PIPEDREAM_WEBHOOK_URI`, and `PIPEDREAM_WEBHOOK_SECRET` entries when the integration
+is unused. Native/custom MCP servers and Macro's own MCP remain available.
+This does not require resetting databases or deleting volumes.
 
 Keys in the file override the code-defined defaults, so you only need to list the integrations you care about. With Doppler access, `just run_local` (without `--no-doppler`) supplies everything automatically.
 

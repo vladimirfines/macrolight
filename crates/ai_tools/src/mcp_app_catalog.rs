@@ -30,22 +30,34 @@ maybe_env_var! {
 
 /// A Pipedream client when this process has the credentials, otherwise `None`.
 ///
-/// Incomplete credentials are treated as unconfigured: a slug cannot be
-/// half-verified.
+/// Missing or blank credentials disable the catalog. A partial set fails
+/// configuration rather than attempting a request with invalid credentials.
 pub fn pipedream_client_from_env() -> anyhow::Result<Option<Arc<PipedreamClient>>> {
-    let env = PipedreamCatalogEnv::new();
-    let (Some(client_id), Some(client_secret), Some(project_id)) = (
+    pipedream_client(PipedreamCatalogEnv::new())
+}
+
+fn pipedream_client(env: PipedreamCatalogEnv) -> anyhow::Result<Option<Arc<PipedreamClient>>> {
+    let (client_id, client_secret, project_id) = match (
         env.pipedream_client_id
             .as_ref()
-            .and_then(|value| value.value()),
+            .and_then(|value| value.value())
+            .filter(|value| !value.trim().is_empty()),
         env.pipedream_client_secret
             .as_ref()
-            .and_then(|value| value.value()),
+            .and_then(|value| value.value())
+            .filter(|value| !value.trim().is_empty()),
         env.pipedream_project_id
             .as_ref()
-            .and_then(|value| value.value()),
-    ) else {
-        return Ok(None);
+            .and_then(|value| value.value())
+            .filter(|value| !value.trim().is_empty()),
+    ) {
+        (Some(client_id), Some(client_secret), Some(project_id)) => {
+            (client_id, client_secret, project_id)
+        }
+        (None, None, None) => return Ok(None),
+        _ => anyhow::bail!(
+            "set all of PIPEDREAM_CLIENT_ID, PIPEDREAM_CLIENT_SECRET and PIPEDREAM_PROJECT_ID, or leave all unset"
+        ),
     };
 
     let environment = env

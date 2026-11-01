@@ -28,14 +28,6 @@ macro_env_var::env_vars!(
     /// Issuer stamped into minted Macro API tokens; must match what the
     /// validators expect.
     pub struct MacroApiTokenIssuer;
-    /// OAuth client ID for the Pipedream API. The same credentials
-    /// `agent_harness_service::cognition` uses: the connections a sandbox spends
-    /// are the ones the person connected in Macro, in the same rows.
-    pub struct PipedreamClientId;
-    /// OAuth client secret for the Pipedream API.
-    pub struct PipedreamClientSecret;
-    /// The Pipedream Connect project ID (`proj_...`).
-    pub struct PipedreamProjectId;
     /// AES key the `mcp_servers` rows' OAuth credentials are encrypted with -
     /// the same one `agent_harness_service::cognition` writes them with, so the
     /// custom MCP servers a person added in Macro are the ones the egress
@@ -47,6 +39,12 @@ macro_env_var::env_vars!(
 );
 
 macro_env_var::maybe_env_vars!(
+    /// Optional Pipedream API client ID; set all three credentials or none.
+    pub struct PipedreamClientId;
+    /// Optional Pipedream API client secret.
+    pub struct PipedreamClientSecret;
+    /// Optional Pipedream Connect project ID.
+    pub struct PipedreamProjectId;
     /// PostHog project token for feature flags and public MCP analytics. When
     /// unset, both are off.
     pub struct PosthogApiKey;
@@ -92,10 +90,6 @@ pub struct Config {
     pub fusionauth_api_key_secret_key: FusionauthApiKeySecretKey,
     /// Secret name of the FusionAuth OAuth client credential.
     pub fusionauth_client_secret_key: FusionauthClientSecretKey,
-    /// Google OAuth application used by MCP sign-in.
-    pub google_client_id: GoogleClientId,
-    /// Secret name of the Google OAuth client credential.
-    pub google_client_secret_key: GoogleClientSecretKey,
     /// Browser-reachable FusionAuth origin, when different from the API.
     pub fusionauth_public_url: FusionauthPublicUrl,
     /// Additional trusted client callback hosts, overriding the built-in list.
@@ -345,10 +339,6 @@ macro_env_var::env_vars! {
     pub struct FusionauthApiKeySecretKey;
     /// Public MCP OAuth configuration.
     pub struct FusionauthClientSecretKey;
-    /// Public MCP OAuth configuration.
-    pub struct GoogleClientId;
-    /// Public MCP OAuth configuration.
-    pub struct GoogleClientSecretKey;
 }
 macro_env_var::maybe_env_vars! {
     /// Optional public MCP OAuth configuration.

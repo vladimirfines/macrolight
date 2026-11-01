@@ -1,8 +1,10 @@
 //! FusionAuth adapter for the MCP OAuth broker.
 
-use anyhow::Context;
 use std::sync::Arc;
 use tracing::Instrument;
+
+#[cfg(test)]
+mod test;
 
 use crate::domain::{
     models::{RefreshToken, UpstreamTokens},
@@ -13,34 +15,22 @@ use crate::domain::{
 #[derive(Clone)]
 pub struct FusionAuthOAuthProvider {
     client: Arc<fusionauth::FusionAuthClient>,
-    google_idp_id: String,
 }
 
 impl FusionAuthOAuthProvider {
-    /// Creates a provider and resolves the Google identity provider ID.
-    #[tracing::instrument(skip(client), err)]
-    pub async fn new(client: fusionauth::FusionAuthClient) -> anyhow::Result<Self> {
-        let google_idp_id = client
-            .get_identity_provider_id_by_name("google_gmail")
-            .await
-            .context("failed to look up Google Gmail identity provider in FusionAuth")?;
-        tracing::debug!(%google_idp_id, "resolved Google IDP ID from FusionAuth");
-
-        Ok(Self {
+    /// Creates a provider using FusionAuth's configured login page.
+    pub fn new(client: fusionauth::FusionAuthClient) -> Self {
+        Self {
             client: Arc::new(client),
-            google_idp_id,
-        })
+        }
     }
 }
 
 impl OAuthProvider for FusionAuthOAuthProvider {
-    #[tracing::instrument(skip(self), err)]
+    #[tracing::instrument(skip_all, err)]
     fn construct_authorize_url(&self, state: &str) -> anyhow::Result<String> {
-        self.client.construct_oauth2_authorize_url(
-            &self.google_idp_id,
-            None,
-            Some(state.to_owned()),
-        )
+        self.client
+            .construct_hosted_oauth2_authorize_url(Some(state.to_owned()))
     }
 
     fn exchange_authorization_code<'a>(&'a self, code: &'a str) -> UpstreamTokensFuture<'a> {

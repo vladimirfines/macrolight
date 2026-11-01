@@ -153,19 +153,46 @@ impl FusionAuthClient {
     where
         T: serde::Serialize + std::fmt::Debug + 'static,
     {
+        self.construct_authorize_url(Some(idp_id), login_hint, state)
+    }
+
+    /// Constructs an authorization URL for FusionAuth's configured login page,
+    /// without requiring a third-party identity provider.
+    pub fn construct_hosted_oauth2_authorize_url<T>(
+        &self,
+        state: Option<T>,
+    ) -> anyhow::Result<String>
+    where
+        T: serde::Serialize + std::fmt::Debug + 'static,
+    {
+        self.construct_authorize_url(None, None, state)
+    }
+
+    fn construct_authorize_url<T>(
+        &self,
+        idp_id: Option<&str>,
+        login_hint: Option<&str>,
+        state: Option<T>,
+    ) -> anyhow::Result<String>
+    where
+        T: serde::Serialize + std::fmt::Debug + 'static,
+    {
         let mut url = Url::parse(&format!("{}/oauth2/authorize", self.fusion_auth_public_url))
-            .expect("Invalid base URL");
+            .context("invalid FusionAuth public URL")?;
 
         url.query_pairs_mut()
             .append_pair("client_id", &self.client_id)
             .append_pair("redirect_uri", &self.oauth_redirect_uri)
-            .append_pair("idp_hint", idp_id)
             .append_pair("response_type", "code")
             .append_pair("scope", "openid profile email offline_access")
             .append_pair("access_type", "offline"); // Explicitly request offline access
 
+        if let Some(idp_id) = idp_id {
+            url.query_pairs_mut().append_pair("idp_hint", idp_id);
+        }
+
         if let Some(state) = state {
-            tracing::trace!(state=?state, "state provided");
+            tracing::trace!("OAuth state provided");
             let state_str = serde_json::to_string(&state)
                 .context("should be able to deserialize state into string")?;
             url.query_pairs_mut().append_pair("state", &state_str);

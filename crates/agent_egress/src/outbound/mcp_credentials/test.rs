@@ -4,6 +4,7 @@ use bot_id::BotId;
 use http::header::{HeaderMap, HeaderValue};
 use pipedream_mcp::outbound::api::McpUpstreamCall;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use url::Url;
 
 fn owner() -> MacroUserIdStr<'static> {
@@ -20,7 +21,19 @@ fn connection(app_slug: &str, enabled: bool) -> PipedreamConnection {
     }
 }
 
-struct FixedConnections(Vec<PipedreamConnection>);
+struct FixedConnections {
+    records: Vec<PipedreamConnection>,
+    list_calls: AtomicUsize,
+}
+
+impl FixedConnections {
+    fn new(records: Vec<PipedreamConnection>) -> Self {
+        Self {
+            records,
+            list_calls: AtomicUsize::new(0),
+        }
+    }
+}
 
 impl ConnectionStore for FixedConnections {
     type Err = std::convert::Infallible;
@@ -49,7 +62,8 @@ impl ConnectionStore for FixedConnections {
         &self,
         _user_id: &MacroUserIdStr<'static>,
     ) -> Result<Vec<PipedreamConnection>, Self::Err> {
-        Ok(self.0.clone())
+        self.list_calls.fetch_add(1, Ordering::Relaxed);
+        Ok(self.records.clone())
     }
 }
 
@@ -97,6 +111,19 @@ fn connected(slug: &str) -> McpDestination {
     McpDestination::Connected(McpServerSlug::parse(slug).expect("a valid slug"))
 }
 
+#[tokio::test]
+async fn an_unconfigured_upstream_refuses_even_a_saved_connection() {
+    let connections = Arc::new(FixedConnections::new(vec![connection("linear", true)]));
+    let credentials = PipedreamMcpCredentials::new(Arc::clone(&connections), None::<SpyUpstream>);
+
+    let refusal = credentials
+        .resolve(&owner(), BotId::TEST_A, &connected("linear"))
+        .await
+        .expect_err("an unconfigured connector must not resolve credentials");
+    assert!(matches!(refusal, EgressError::UnknownServer(slug) if slug.as_str() == "linear"));
+    assert_eq!(connections.list_calls.load(Ordering::Relaxed), 0);
+}
+
 /// The slug a sandbox dials is Pipedream's `app_slug`, byte for byte -
 /// nothing is derived at either end, so the docs' spelling is the dialable
 /// spelling.
@@ -104,8 +131,11 @@ fn connected(slug: &str) -> McpDestination {
 async fn resolves_an_app_slug_verbatim() {
     let upstream = SpyUpstream::at("https://remote.mcp.pipedream.net");
     let credentials = PipedreamMcpCredentials::new(
-        Arc::new(FixedConnections(vec![connection("google_sheets", true)])),
-        upstream.clone(),
+        Arc::new(FixedConnections::new(vec![connection(
+            "google_sheets",
+            true,
+        )])),
+        Some(upstream.clone()),
     );
 
     let McpResolution::Connected(call) = credentials
@@ -126,8 +156,8 @@ async fn resolves_an_app_slug_verbatim() {
 async fn carries_the_scoping_headers_next_to_the_bearer() {
     let upstream = SpyUpstream::at("https://remote.mcp.pipedream.net");
     let credentials = PipedreamMcpCredentials::new(
-        Arc::new(FixedConnections(vec![connection("linear", true)])),
-        upstream.clone(),
+        Arc::new(FixedConnections::new(vec![connection("linear", true)])),
+        Some(upstream.clone()),
     );
 
     let McpResolution::Connected(call) = credentials
@@ -160,8 +190,8 @@ async fn carries_the_scoping_headers_next_to_the_bearer() {
 async fn a_disabled_connection_resolves_as_unconnected() {
     let upstream = SpyUpstream::at("https://remote.mcp.pipedream.net");
     let credentials = PipedreamMcpCredentials::new(
-        Arc::new(FixedConnections(vec![connection("linear", false)])),
-        upstream.clone(),
+        Arc::new(FixedConnections::new(vec![connection("linear", false)])),
+        Some(upstream.clone()),
     );
 
     let resolution = credentials
@@ -187,8 +217,10 @@ async fn a_disabled_connection_resolves_as_unconnected() {
 #[tokio::test]
 async fn a_slug_nobody_connected_resolves_as_unconnected_for_the_owner() {
     let upstream = SpyUpstream::at("https://remote.mcp.pipedream.net");
-    let credentials =
-        PipedreamMcpCredentials::new(Arc::new(FixedConnections(Vec::new())), upstream.clone());
+    let credentials = PipedreamMcpCredentials::new(
+        Arc::new(FixedConnections::new(Vec::new())),
+        Some(upstream.clone()),
+    );
 
     let McpResolution::Unconnected(call) = credentials
         .resolve(&owner(), BotId::TEST_A, &connected("linear"))
@@ -215,8 +247,8 @@ async fn a_slug_nobody_connected_resolves_as_unconnected_for_the_owner() {
 async fn refuses_a_cleartext_upstream() {
     let upstream = SpyUpstream::at("http://remote.mcp.pipedream.net");
     let credentials = PipedreamMcpCredentials::new(
-        Arc::new(FixedConnections(vec![connection("linear", true)])),
-        upstream.clone(),
+        Arc::new(FixedConnections::new(vec![connection("linear", true)])),
+        Some(upstream.clone()),
     );
 
     let refusal = credentials

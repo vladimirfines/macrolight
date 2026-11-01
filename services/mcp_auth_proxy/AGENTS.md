@@ -56,6 +56,10 @@ Use `mounted_mcp_router` in the harness so MCP does not override process
 readiness at `/health`. The standalone `mcp_router` remains available to tests
 and other library consumers. Both retain OAuth metadata, CORS, and bearer auth.
 
+The FusionAuth adapter initializes without network lookups and opens the hosted
+login page without forcing an external identity provider. Keep OAuth callback,
+PKCE, token binding, and bearer validation unchanged when editing this flow.
+
 ## Gotchas
 
 - Don't add an MCP client's host to FusionAuth's authorized origins

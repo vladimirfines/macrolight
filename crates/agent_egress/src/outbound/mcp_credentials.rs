@@ -32,7 +32,7 @@ mod test;
 /// Resolves MCP slugs against an owner's Pipedream connections.
 pub struct PipedreamMcpCredentials<Connections, Upstream> {
     connections: Arc<Connections>,
-    upstream: Upstream,
+    upstream: Option<Upstream>,
 }
 
 impl<Connections, Upstream> PipedreamMcpCredentials<Connections, Upstream>
@@ -41,8 +41,9 @@ where
     Upstream: McpUpstream,
 {
     /// Build the adapter over the store holding the owner's connections and
-    /// the client that addresses Pipedream's MCP server.
-    pub fn new(connections: Arc<Connections>, upstream: Upstream) -> Self {
+    /// the client that addresses Pipedream's MCP server. Without a client,
+    /// Pipedream destinations are unavailable and no connection rows are read.
+    pub fn new(connections: Arc<Connections>, upstream: Option<Upstream>) -> Self {
         Self {
             connections,
             upstream,
@@ -100,6 +101,9 @@ where
                  the composition root did not layer WithMacroMcp"
             )));
         };
+        let Some(upstream) = &self.upstream else {
+            return Err(EgressError::UnknownServer(slug.clone()));
+        };
         // Pipedream addresses a call by user id and app slug alone (see
         // `McpUpstream::upstream`), so an app the owner never connected is
         // still addressable for them: the handshake and tool listing work,
@@ -123,7 +127,7 @@ where
         // refresh token to fail on. If the account behind this connection has
         // gone unhealthy, Pipedream answers the forwarded call with its own
         // error and the status passes through to the agent.
-        let call = self.upstream.upstream(&record).await.map_err(|error| {
+        let call = upstream.upstream(&record).await.map_err(|error| {
             EgressError::Upstream(rootcause::report!(
                 "could not address Pipedream for {slug}: {error:?}"
             ))

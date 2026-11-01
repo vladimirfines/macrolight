@@ -1,5 +1,13 @@
 # Login
 
+## External MCP sign-in
+
+An external MCP client opens the broker authorization flow, which redirects to
+FusionAuth's hosted login page. Use a login method configured on that FusionAuth
+application; Google/Gmail is not required. Complete sign-in and return through
+the broker's registered callback. The normal application email-code flow below
+is separate and retains its existing behavior.
+
 ## Flow
 
 1. Navigate to `/app`. Unauthenticated sessions land on `/app/welcome`.

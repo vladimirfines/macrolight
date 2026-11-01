@@ -40,6 +40,10 @@ passwordless/password flows against the FusionAuth HTTP API.
 - `cargo test -p fusionauth`.
 - `just check` runs `rules/ast-grep/rust-fusionauth-classify-transport.yml`.
 
+Use `construct_hosted_oauth2_authorize_url` when the caller should offer
+FusionAuth's configured login methods; retain `construct_oauth2_authorize_url`
+for a flow that explicitly selects an identity provider.
+
 ## Gotchas
 
 - Map request failures with `.map_err(FusionAuthClientError::transport)` and

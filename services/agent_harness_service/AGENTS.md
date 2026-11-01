@@ -131,6 +131,12 @@ address, avoiding an ALB/self-startup race. Shutdown stops scheduling intake and
 projection workers before draining sessions and pending publishes. Preview
 listener failure shuts down the process so ECS can replace the task.
 
+Public MCP uses FusionAuth's hosted login without a Google identity-provider
+lookup or Google credentials. Keep FusionAuth and its client secrets required.
+Pipedream credentials are optional as a complete set: missing/blank values
+disable connectors, while a partial set fails startup. Keep cognition and
+sandbox-egress configuration behavior aligned.
+
 ## Gotchas
 
 - Keep two tasks and rolling replacements in both environments. Preview
