@@ -68,6 +68,9 @@ before touching the edit flow.
 
 - This worker never deploys without explicit approval — `just deploy-dev` /
   `deploy-prod` run `generate-sandbox` first; don't run them unprompted.
+- Local Compose builds dependencies inside Linux and mounts only `.wrangler`;
+  rebuild its image after source changes. Never bind host `node_modules` over
+  the image. See `deploy/selfhost/DEPLOYMENT.md` for existing snapshot updates.
 
 ## Related
 

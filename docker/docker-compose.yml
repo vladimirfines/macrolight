@@ -344,8 +344,7 @@ services:
       - lexical_service
       - fusionauth
     networks:
-      # `auth` too: public MCP boot resolves the Google identity provider in
-      # FusionAuth, which lives on that network only.
+      # Public MCP uses FusionAuth's hosted login and token endpoints.
       auth:
       databases:
       services:
@@ -530,10 +529,9 @@ services:
     ports:
       - "8933:8933"
     volumes:
-      - .:/app
-      # .wrangler (incl. the local D1 trace shard) persists to the host via the
-      # repository mount above, so `bun run traces --env local --local` works from the
-      # host without docker exec. An anonymous volume used to shadow this path.
+      # Persist traces only; a repository mount would replace Linux-installed
+      # native dependencies with the host's Darwin dependency tree.
+      - ./services/ai-editing-worker/.wrangler:/app/services/ai-editing-worker/.wrangler
     depends_on:
       - sync_service
     networks:
